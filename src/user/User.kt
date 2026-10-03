@@ -1,8 +1,3 @@
-package user
-
-import cart.ShoppingCart
-import order.Order
-
 /**
  * Representasi pengguna/pelanggan pada sistem e-commerce.
  */
@@ -10,7 +5,8 @@ class User(
     val id: String,
     var name: String,
     var email: String,
-    var address: String
+    var address: String,
+    private val password: String
 ) {
     val cart: ShoppingCart = ShoppingCart()
     private val orderHistory: MutableList<Order> = mutableListOf()
@@ -18,7 +14,10 @@ class User(
     init {
         require(id.isNotBlank()) { "ID user tidak boleh kosong" }
         require(isValidEmail(email)) { "Format email tidak valid" }
+        require(password.isNotBlank()) { "Password tidak boleh kosong" }
     }
+
+    fun authenticate(inputPassword: String): Boolean = inputPassword == password
 
     private fun isValidEmail(value: String): Boolean =
         Regex("^[\\w.+-]+@[\\w-]+\\.[\\w.]+$").matches(value)
@@ -33,8 +32,6 @@ class User(
     fun addOrder(order: Order) {
         orderHistory.add(order)
     }
-
-    fun addOrderToHistory(order: Order) = addOrder(order)
 
     fun getOrderHistory(): List<Order> = orderHistory.toList()
 
