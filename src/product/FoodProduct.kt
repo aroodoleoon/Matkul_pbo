@@ -2,22 +2,25 @@ package product
 
 /**
  * FoodProduct - produk makanan/minuman, turunan dari Product.
- * Aturan diskon: otomatis 20% jika hampir kadaluarsa (<= 3 hari).
- * Masa kadaluarsa disimpan sebagai sisa hari (Int).
+ * Aturan diskon (sesuai modul): produk organik mendapat diskon 20%.
+ * expiryDate     : teks tanggal untuk ditampilkan, contoh "2026-10-10"
+ * daysUntilExpiry: sisa hari, dipakai untuk logika kadaluarsa
  */
 class FoodProduct(
     id: String,
     name: String,
     price: Double,
     stock: Int,
-    var daysUntilExpiry: Int,        // sisa hari sebelum kadaluarsa (negatif = sudah lewat)
+    val expiryDate: String,
+    var daysUntilExpiry: Int,        // negatif = sudah lewat
     val weightInGram: Int,
+    val isOrganic: Boolean = false,
     val isHalal: Boolean = true
 ) : Product(id, name, price, stock) {
 
     companion object {
-        const val NEAR_EXPIRY_DAYS = 3        // batas "hampir kadaluarsa"
-        const val NEAR_EXPIRY_DISCOUNT = 0.20 // diskon 20%
+        const val ORGANIC_DISCOUNT = 0.20 // diskon organik 20%
+        const val NEAR_EXPIRY_DAYS = 3    // batas peringatan "hampir kadaluarsa"
     }
 
     fun isExpired(): Boolean = daysUntilExpiry < 0
@@ -29,9 +32,9 @@ class FoodProduct(
         daysUntilExpiry -= days
     }
 
-    // Abstract dari Product: diskon hanya jika hampir kadaluarsa
+    // Abstract dari Product: diskon hanya untuk produk organik
     override fun calculateDiscount(): Double =
-        if (isNearExpiry()) getPriceValue() * NEAR_EXPIRY_DISCOUNT else 0.0
+        if (isOrganic) getPriceValue() * ORGANIC_DISCOUNT else 0.0
 
     // Abstract dari Product: nama kategori
     override fun getCategory(): String = "Makanan"
@@ -39,11 +42,12 @@ class FoodProduct(
     override fun displayInfo() {
         super.displayInfo()
         println("Berat      : ${weightInGram}g")
+        println("Organik    : ${if (isOrganic) "Ya (diskon 20%)" else "Tidak"}")
         println("Halal      : ${if (isHalal) "Ya" else "Tidak"}")
-        println("Sisa Hari  : $daysUntilExpiry")
+        println("Kadaluarsa : $expiryDate (sisa $daysUntilExpiry hari)")
         when {
             isExpired() -> println("Status     : KADALUARSA (tidak dapat dibeli)")
-            isNearExpiry() -> println("Status     : Hampir kadaluarsa, diskon otomatis")
+            isNearExpiry() -> println("Status     : Hampir kadaluarsa!")
         }
         println("=".repeat(50))
     }

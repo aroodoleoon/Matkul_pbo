@@ -1,25 +1,11 @@
-package system
-
-import cart.ShoppingCart
 import order.Order
 import order.OrderStatus
-import payment.PaymentMethod
-import payment.PaymentResult
 import product.FoodProduct
 import product.Product
-import user.User
 
-/**
- * ECommerceSystem - pusat pengelolaan toko: katalog produk, pelanggan, order, dan checkout.
- * Main.kt (Wildan) cukup membuat objek ini lalu memanggil fungsinya.
- *
- * Cara kerja dengan file teman (sudah dicocokkan dengan kode asli):
- *  - Product / FoodProduct   : getDiscountedPrice(), reduceStock()
- *  - ShoppingCart (Bang Ar)  : stok SUDAH dikurangi saat addItem(), jadi checkout tidak mengurangi lagi
- *  - PaymentMethod (Bang Ar) : processPayment(amount) -> PaymentResult, getFee(amount)
- *  - Order / OrderStatus     : Order(id, customerName, items, status)
- *  - User (Habibi)           : belum dipakai, pelanggan dikenali lewat username (String)
- */
+
+// ECommerceSystem - pusat pengelolaan toko: katalog produk, pelanggan, order, dan checkout.
+
 class ECommerceSystem(val storeName: String = "Toko Kelompok") {
 
     private val products = mutableMapOf<String, Product>() // key = product id
@@ -68,12 +54,6 @@ class ECommerceSystem(val storeName: String = "Toko Kelompok") {
         }
         return true
     }
-
-    fun registerCustomer(user: User): Boolean {
-        return registerCustomer(user.name)
-    }
-
-    fun registerUser(user: User): Boolean = registerCustomer(user)
 
     // ---------------------- CHECKOUT ----------------------
 
@@ -127,14 +107,6 @@ class ECommerceSystem(val storeName: String = "Toko Kelompok") {
         }
     }
 
-    fun checkout(user: User, cart: ShoppingCart, payment: PaymentMethod): Order? {
-        val order = checkout(user.name, cart, payment)
-        if (order != null) {
-            user.addOrder(order)
-        }
-        return order
-    }
-
     // Membuat order dari isi keranjang, lalu mengosongkan keranjang
     private fun buildOrder(customerName: String, cart: ShoppingCart, status: OrderStatus): Order {
         orderCounter++
@@ -177,5 +149,71 @@ class ECommerceSystem(val storeName: String = "Toko Kelompok") {
         // reduceStock dengan nilai negatif = menambah stok (cara yang sama dipakai ShoppingCart)
         order.items.forEach { (product, qty) -> product.reduceStock(-qty) }
         return true
+    }
+
+    // ---------------------- LAPORAN PENJUALAN ----------------------
+
+    // Order dihitung sebagai penjualan jika sudah dibayar (Paid, Shipped, Delivered).
+    // Pending (belum bayar) dan Cancelled tidak masuk pendapatan.
+    private fun countsAsSale(order: Order): Boolean =
+        order.status == OrderStatus.Paid ||
+                order.status == OrderStatus.Shipped ||
+                order.status == OrderStatus.Delivered
+
+    /** Total pendapatan dari order yang sudah dibayar. */
+    fun getTotalRevenue(): Double =
+        orders.filter { countsAsSale(it) }.sumOf { it.totalPrice }
+
+    /** Jumlah seluruh order (semua status). */
+    fun getOrderCount(): Int = orders.size
+
+    /** Menampilkan laporan penjualan lengkap. */
+    fun displaySalesReport() {
+        val sales = orders.filter { countsAsSale(it) }
+        val pendingCount = orders.count { it.status == OrderStatus.Pending }
+        val cancelledCount = orders.count { it.status is OrderStatus.Cancelled }
+
+        println("=".repeat(55))
+        println("LAPORAN PENJUALAN - $storeName")
+        println("=".repeat(55))
+        println("Total Order        : ${getOrderCount()}")
+        println("  - Terjual        : ${sales.size}")
+        println("  - Menunggu bayar : $pendingCount")
+        println("  - Dibatalkan     : $cancelledCount")
+        println("-".repeat(55))
+        println("Total Pendapatan   : Rp ${formatRupiah(getTotalRevenue())}")
+        println("Total Diskon       : Rp ${formatRupiah(sales.sumOf { it.totalDiscount })}")
+        if (sales.isNotEmpty()) {
+            println("Rata-rata per Order: Rp ${formatRupiah(getTotalRevenue() / sales.size)}")
+        }
+
+        // Rincian per kategori produk
+        val entries = sales.flatMap { it.items.entries }
+        val unitsPerCategory = entries.groupBy({ it.key.getCategory() }, { it.value })
+        val revenuePerCategory = entries.groupBy({ it.key.getCategory() }, { it.key.getDiscountedPrice() * it.value })
+        println("-".repeat(55))
+        println("Per Kategori:")
+        if (unitsPerCategory.isEmpty()) {
+            println("   (belum ada penjualan)")
+        } else {
+            unitsPerCategory.forEach { (category, units) ->
+                val revenue = revenuePerCategory[category]?.sum() ?: 0.0
+                println("   $category: ${units.sum()} item, Rp ${formatRupiah(revenue)}")
+            }
+        }
+        println("=".repeat(55))
+    }
+
+    // Format angka ke Rupiah dengan titik ribuan, contoh 15000000 -> 15.000.000
+    private fun formatRupiah(nominal: Double): String {
+        val str = nominal.toLong().toString()
+        val builder = StringBuilder()
+        var count = 0
+        for (i in str.length - 1 downTo 0) {
+            builder.insert(0, str[i])
+            count++
+            if (count % 3 == 0 && i > 0) builder.insert(0, ".")
+        }
+        return builder.toString()
     }
 }
