@@ -1,0 +1,44 @@
+/**
+ * Representasi pengguna/pelanggan pada sistem e-commerce.
+ */
+class User(
+    val id: String,
+    var name: String,
+    var email: String,
+    var address: String
+) {
+    val cart: ShoppingCart = ShoppingCart()
+    private val orderHistory: MutableList<Order> = mutableListOf()
+
+    init {
+        require(id.isNotBlank()) { "ID user tidak boleh kosong" }
+        require(isValidEmail(email)) { "Format email tidak valid" }
+    }
+
+    private fun isValidEmail(value: String): Boolean =
+        Regex("^[\\w.+-]+@[\\w-]+\\.[\\w.]+$").matches(value)
+
+    fun updateProfile(newName: String = name, newEmail: String = email, newAddress: String = address) {
+        require(isValidEmail(newEmail)) { "Format email tidak valid" }
+        name = newName
+        email = newEmail
+        address = newAddress
+    }
+
+    fun addOrder(order: Order) {
+        orderHistory.add(order)
+    }
+
+    fun getOrderHistory(): List<Order> = orderHistory.toList()
+
+    fun displayInfo() {
+        println("=== Profil User ===")
+        println("ID     : $id")
+        println("Nama   : $name")
+        println("Email  : $email")
+        println("Alamat : $address")
+        println("Jumlah pesanan: ${orderHistory.size}")
+    }
+
+    override fun toString(): String = "User(id=$id, name=$name, email=$email)"
+}
