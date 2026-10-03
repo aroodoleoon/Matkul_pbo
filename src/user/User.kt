@@ -19,8 +19,18 @@ class User(
 
     fun authenticate(inputPassword: String): Boolean = inputPassword == password
 
-    private fun isValidEmail(value: String): Boolean =
-        Regex("^[\\w.+-]+@[\\w-]+\\.[\\w.]+$").matches(value)
+    private fun isValidEmail(value: String): Boolean {
+        if (value.contains(" ")) return false
+ 
+        val parts = value.split("@")
+        if (parts.size != 2) return false // harus tepat satu @
+ 
+        val (namaUser, domain) = parts
+        return namaUser.isNotEmpty() &&
+               domain.contains(".") &&
+               !domain.startsWith(".") &&
+               !domain.endsWith(".")
+    }
 
     fun updateProfile(newName: String = name, newEmail: String = email, newAddress: String = address) {
         require(isValidEmail(newEmail)) { "Format email tidak valid" }
