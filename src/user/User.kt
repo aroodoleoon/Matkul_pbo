@@ -1,3 +1,8 @@
+package user
+
+import cart.ShoppingCart
+import order.Order
+
 /**
  * Representasi pengguna/pelanggan pada sistem e-commerce.
  */
