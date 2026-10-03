@@ -1,3 +1,8 @@
+package user
+
+import cart.ShoppingCart
+import order.Order
+
 /**
  * Representasi pengguna/pelanggan pada sistem e-commerce.
  */
@@ -28,6 +33,8 @@ class User(
     fun addOrder(order: Order) {
         orderHistory.add(order)
     }
+
+    fun addOrderToHistory(order: Order) = addOrder(order)
 
     fun getOrderHistory(): List<Order> = orderHistory.toList()
 

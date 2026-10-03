@@ -1,3 +1,5 @@
+package payment
+
 /**
  * Kontrak (abstraksi) untuk semua metode pembayaran.
  *

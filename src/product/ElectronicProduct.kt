@@ -1,3 +1,5 @@
+package product
+
 class ElectronicProduct(
     id: String,
     name: String,

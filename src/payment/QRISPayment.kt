@@ -1,3 +1,5 @@
+package payment
+
 import java.util.UUID
 
 /**
@@ -9,7 +11,8 @@ class QRISPayment(
     private val expiryMinutes: Int = 15
 ) : PaymentMethod {
 
-    override val methodName: String = "QRIS"
+    override val name: String = "QRIS"
+    val methodName: String get() = name
 
     private var qrCode: String? = null
     private var generatedAt: Long = 0L
@@ -33,26 +36,32 @@ class QRISPayment(
     private fun isExpired(): Boolean =
         System.currentTimeMillis() - generatedAt > expiryMinutes * 60_000L
 
-    /** Memproses pembayaran. Mengembalikan true jika berhasil. */
-    override fun processPayment(amount: Double): Boolean {
+    /** Memproses pembayaran. Mengembalikan PaymentResult sesuai kontrak PaymentMethod. */
+    override fun processPayment(amount: Double): PaymentResult {
         if (amount <= 0) {
             println("Pembayaran gagal: nominal tidak valid.")
-            return false
+            return PaymentResult.Failed("Nominal tidak valid", 403)
         }
 
         val code = generateQR(amount)
 
         if (isExpired()) {
             println("Pembayaran gagal: kode QR kedaluwarsa.")
-            return false
+            return PaymentResult.Failed("Kode QR kedaluwarsa", 403)
         }
 
         // Simulasi pemindaian & konfirmasi dari aplikasi e-wallet/mobile banking
         println("Memindai $code ... pembayaran dikonfirmasi.")
         isPaid = true
         println("Pembayaran QRIS berhasil.")
-        return true
+        return PaymentResult.Success(code)
     }
+
+    fun processPaymentBoolean(amount: Double): Boolean {
+        return processPayment(amount) is PaymentResult.Success
+    }
+
+    override fun getFee(amount: Double): Double = 0.0
 
     override fun toString(): String = "QRISPayment(merchant=$merchantName, paid=$isPaid)"
 }

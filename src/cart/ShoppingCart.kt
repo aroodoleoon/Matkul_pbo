@@ -1,3 +1,7 @@
+package cart
+
+import product.Product
+
 /**
  * Kelas untuk merepresentasikan keranjang belanja milik seorang pengguna.
  *
@@ -7,7 +11,7 @@
  *
  * @property owner Username pemilik keranjang (private)
  */
-class ShoppingCart(private val owner: String) {
+class ShoppingCart(private val owner: String = "User") {
 
     // ============================================================
     // PROPERTI
