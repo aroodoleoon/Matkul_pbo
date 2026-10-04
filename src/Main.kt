@@ -7,24 +7,31 @@ import payment.QRISPayment
 import payment.CreditCardPayment
 import payment.BankTransferPayment
 
+/**
+ * Titik masuk utama (Entry Point) aplikasi E-Commerce berbasis CLI interaktif.
+ *
+ * Menginisialisasi katalog produk toko ([ECommerceSystem]), menyediakan data awal,
+ * serta menjalankan perulangan menu utama yang membedakan hak akses tamu (belum login)
+ * dan pelanggan terdaftar (sudah login).
+ */
 fun main() {
     val system = ECommerceSystem("Toko Online Kampus")
 
     // ============================================================
     // SEED DATA: KATALOG PRODUK
     // ============================================================
-    system.addProduct(ElectronicProduct("E01", "Laptop Gaming ASUS", 15000000.0, 10, "ASUS", 36, true))
-    system.addProduct(ElectronicProduct("E02", "Smartphone Samsung", 5000000.0, 15, "Samsung", 12, false))
-    system.addProduct(ClothingProduct("C01", "Jaket Musim Dingin", 400000.0, 20, "XL", "Navy", "Wol", true))
-    system.addProduct(ClothingProduct("C02", "Kaos Polos Cotton", 100000.0, 50, "M", "Hitam", "Katun Combed", false))
-    system.addProduct(FoodProduct("F01", "Beras Organik 5kg", 90000.0, 30, "2026-12-31", 100, 5000, true, true))
-    system.addProduct(FoodProduct("F02", "Roti Tawar Gandum", 20000.0, 25, "2026-10-06", 2, 500, false, true))
+    // system.addProduct(ElectronicProduct("E01", "Laptop Gaming ASUS", 15000000.0, 10, "ASUS", 36, true))
+    // system.addProduct(ElectronicProduct("E02", "Smartphone Samsung", 5000000.0, 15, "Samsung", 12, false))
+    // system.addProduct(ClothingProduct("C01", "Jaket Musim Dingin", 400000.0, 20, "XL", "Navy", "Wol", true))
+    // system.addProduct(ClothingProduct("C02", "Kaos Polos Cotton", 100000.0, 50, "M", "Hitam", "Katun Combed", false))
+    // system.addProduct(FoodProduct("F01", "Beras Organik 5kg", 90000.0, 30, "2026-12-31", 100, 5000, true, true))
+    // system.addProduct(FoodProduct("F02", "Roti Tawar Gandum", 20000.0, 25, "2026-10-06", 2, 500, false, true))
 
-    // Akun demo bawaan (agar bisa langsung tes login)
+    // Akun demo bawaan (agar penguji bisa langsung tes login)
     val demoUser = User("USR-001", "Budi Santoso", "budi@email.com", "Jl. Mawar No. 10", "password123")
     system.registerUser(demoUser)
 
-    // State user yang sedang login (null = belum login)
+    // State penanda sesi user yang sedang login (null = belum login)
     var currentUser: User? = null
     var isRunning = true
 
@@ -51,18 +58,18 @@ fun main() {
                 "2" -> {
                     val newUser = system.registerForm()
                     if (newUser != null) {
-                        println("  Silakan login dengan akun yang baru didaftarkan.")
+                        println("ℹ️  Silakan login dengan akun yang baru didaftarkan.")
                     }
                 }
                 "3" -> {
                     system.displayAllProducts()
                 }
                 "4" -> {
-                    println("Terima kasih telah berkunjung ke Toko Online Kampus!")
+                    println("👋 Terima kasih telah berkunjung ke Toko Online Kampus!")
                     isRunning = false
                 }
                 else -> {
-                    println("Pilihan tidak valid, silakan coba lagi.")
+                    println("❌ Pilihan tidak valid, silakan coba lagi.")
                 }
             }
         } else {
@@ -93,7 +100,7 @@ fun main() {
                     val product = system.findProduct(productId)
 
                     if (product == null) {
-                        println("Produk dengan ID '$productId' tidak ditemukan.")
+                        println("❌ Produk dengan ID '$productId' tidak ditemukan.")
                     } else {
                         print("Masukkan jumlah (Quantity): ")
                         val qty = readLine()?.trim()?.toIntOrNull() ?: 0
@@ -105,7 +112,7 @@ fun main() {
                 }
                 "4" -> {
                     if (currentUser.cart.isEmpty()) {
-                        println(" Keranjang belanja Anda masih kosong.")
+                        println("ℹ️  Keranjang belanja Anda masih kosong.")
                     } else {
                         currentUser.cart.displayCart()
                         print("\nMasukkan ID Produk yang ingin dihapus dari keranjang: ")
@@ -115,13 +122,13 @@ fun main() {
                         if (itemToRemove != null) {
                             currentUser.cart.removeItem(itemToRemove)
                         } else {
-                            println("Produk dengan ID '$productId' tidak ada di keranjang Anda.")
+                            println("❌ Produk dengan ID '$productId' tidak ada di keranjang Anda.")
                         }
                     }
                 }
                 "5" -> {
                     if (currentUser.cart.isEmpty()) {
-                        println("Keranjang kosong! Tambahkan produk terlebih dahulu sebelum checkout.")
+                        println("❌ Keranjang kosong! Tambahkan produk terlebih dahulu sebelum checkout.")
                     } else {
                         currentUser.cart.displayCart()
                         println("\n--- Pilih Metode Pembayaran ---")
@@ -147,7 +154,7 @@ fun main() {
                                 BankTransferPayment(rek, if (bank.isBlank()) "BCA" else bank)
                             }
                             else -> {
-                                println(" Pilihan tidak valid, default menggunakan QRIS.")
+                                println("⚠️  Pilihan tidak valid, default menggunakan QRIS.")
                                 QRISPayment()
                             }
                         }
@@ -174,11 +181,11 @@ fun main() {
                     system.displaySalesReport()
                 }
                 "8" -> {
-                    println(" Anda telah berhasil logout.")
+                    println("🔒 Anda telah berhasil logout.")
                     currentUser = null
                 }
                 else -> {
-                    println("Pilihan tidak valid, silakan coba lagi.")
+                    println("❌ Pilihan tidak valid, silakan coba lagi.")
                 }
             }
         }

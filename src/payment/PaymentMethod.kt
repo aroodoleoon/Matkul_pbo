@@ -1,57 +1,59 @@
 package payment
 
 /**
- * Kontrak (abstraksi) untuk semua metode pembayaran.
+ * Kontrak abstraksi antarmuka untuk semua metode pembayaran dalam sistem e-commerce.
  *
- * Setiap metode pembayaran (Kartu Kredit, QRIS, Transfer Bank) wajib
- * mengimplementasikan interface ini sehingga dapat diperlakukan secara
- * polimorfik oleh `User.checkout()`.
+ * Menerapkan prinsip polimorfisme sehingga berbagai penyedia pembayaran
+ * (QRIS, Kartu Kredit, Transfer Bank) dapat diproses seragam oleh sistem checkout.
  */
 interface PaymentMethod {
 
-    /** Nama metode pembayaran yang ditampilkan ke pengguna. */
+    /**
+     * Nama tampilan metode pembayaran yang disajikan kepada pengguna.
+     */
     val name: String
 
     /**
-     * Memproses pembayaran sejumlah tertentu.
+     * Memproses transaksi pembayaran untuk nominal tertentu.
      *
-     * @param amount Nominal yang dibayar dalam Rupiah
-     * @return [PaymentResult] hasil pembayaran (Success, Failed, atau Pending)
+     * @param amount Nominal transaksi yang harus dibayar dalam satuan Rupiah.
+     * @return [PaymentResult] yang merepresentasikan status transaksi (Success, Failed, atau Pending).
      */
     fun processPayment(amount: Double): PaymentResult
 
     /**
-     * Menghitung biaya admin untuk metode pembayaran ini.
+     * Menghitung besaran biaya transaksi/admin untuk metode pembayaran ini.
      *
-     * @param amount Nominal transaksi dalam Rupiah
-     * @return Biaya admin dalam Rupiah
+     * @param amount Nominal dasar transaksi belanja dalam Rupiah.
+     * @return Biaya admin dalam satuan Rupiah.
      */
     fun getFee(amount: Double): Double
 }
 
 /**
- * Sealed class untuk hasil pembayaran.
+ * Kelas tersegel (sealed class) yang merepresentasikan variasi hasil dari pemrosesan pembayaran.
  *
- * Karena sealed, `when` pada [PaymentResult] bersifat eksaustif
- * (compiler memastikan semua kemungkinan hasil ditangani).
+ * Mengamankan evaluasi ekspresi `when` agar bersifat mutlak/eksaustif tanpa memerlukan cabang `else`.
  */
 sealed class PaymentResult {
 
     /**
-     * Pembayaran berhasil.
+     * Merepresentasikan transaksi pembayaran yang berhasil diselesaikan.
      *
-     * @property transactionId ID unik transaksi
+     * @property transactionId Nomor referensi unik tanda terima transaksi.
      */
     data class Success(val transactionId: String) : PaymentResult()
 
     /**
-     * Pembayaran gagal.
+     * Merepresentasikan transaksi pembayaran yang mengalami kegagalan.
      *
-     * @property reason Alasan kegagalan
-     * @property errorCode Kode error (401 = kartu, 402 = CVV, 403 = QR, 404 = rekening)
+     * @property reason Penjelasan penyebab terjadinya kegagalan pembayaran.
+     * @property errorCode Kode status error numerik (401 = kartu, 402 = CVV, 403 = QR, 404 = rekening).
      */
     data class Failed(val reason: String, val errorCode: Int) : PaymentResult()
 
-    /** Pembayaran masih menunggu konfirmasi. */
+    /**
+     * Merepresentasikan transaksi pembayaran yang masih berstatus menunggu konfirmasi.
+     */
     object Pending : PaymentResult()
 }

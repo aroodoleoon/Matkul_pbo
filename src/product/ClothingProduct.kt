@@ -1,33 +1,60 @@
 package product
 
 /**
- * ClothingProduct - produk pakaian, turunan dari Product.
- * Aturan diskon:
- *  1. Diskon seasonal jika isSeasonal = true
- *  2. Diskon ukuran besar jika size XL ke atas (XL, XXL, XXXL)
- * Kedua diskon dijumlahkan (maksimal 100%).
+ * Representasi produk kategori pakaian (clothing) dalam sistem e-commerce.
+ *
+ * Mewarisi kelas [Product] dengan aturan diskon khusus:
+ * 1. Diskon musiman ([isSeasonal]) sebesar 30%.
+ * 2. Diskon ukuran besar ([isLargeSize]) untuk ukuran XL ke atas sebesar 10%.
+ *
+ * Kedua diskon dapat diakumulasikan hingga batas maksimal 100%.
+ *
+ * @param id Identifikasi unik produk.
+ * @param name Nama produk pakaian.
+ * @param price Harga asli produk pakaian.
+ * @param stock Jumlah unit stok yang tersedia.
+ * @property size Ukuran pakaian (contoh: "S", "M", "L", "XL", "XXL").
+ * @property color Warna produk pakaian (contoh: "Hitam", "Navy", "Merah").
+ * @property material Jenis bahan kain (contoh: "Katun", "Polyester", "Wol").
+ * @property isSeasonal Menandakan apakah produk merupakan barang promo musiman.
  */
 class ClothingProduct(
     id: String,
     name: String,
     price: Double,
     stock: Int,
-    val size: String,                 // contoh: "S", "M", "L", "XL", "XXL"
+    val size: String,
     val color: String,
-    val material: String,             // contoh: "Katun", "Polyester"
-    val isSeasonal: Boolean = false   // true = produk musiman
+    val material: String,
+    val isSeasonal: Boolean = false
 ) : Product(id, name, price, stock) {
 
+    /**
+     * Objek pendamping yang memuat konstanta diskon dan ukuran besar pakaian.
+     */
     companion object {
-        // TODO: cocokkan angka dengan modul
+        /** Persentase diskon untuk produk pakaian musiman (30%). */
         const val SEASONAL_DISCOUNT_PERCENT = 30.0
+
+        /** Persentase diskon tambahan untuk produk berukuran besar (10%). */
         const val LARGE_SIZE_DISCOUNT_PERCENT = 10.0
+
+        /** Himpunan ukuran pakaian yang dikategorikan sebagai ukuran besar. */
         val LARGE_SIZES = setOf("XL", "XXL", "XXXL")
     }
 
+    /**
+     * Memeriksa apakah ukuran pakaian termasuk dalam kategori ukuran besar ([LARGE_SIZES]).
+     *
+     * @return `true` jika ukuran pakaian adalah XL, XXL, atau XXXL.
+     */
     fun isLargeSize(): Boolean = size.uppercase() in LARGE_SIZES
 
-    // Total persentase diskon dari semua aturan
+    /**
+     * Menghitung total akumulasi persentase diskon berdasarkan aturan musiman dan ukuran pakaian.
+     *
+     * @return Total persentase diskon dalam persen (rentang 0.0 sampai 100.0).
+     */
     fun getDiscountPercent(): Double {
         var percent = 0.0
         if (isSeasonal) percent += SEASONAL_DISCOUNT_PERCENT
@@ -35,14 +62,26 @@ class ClothingProduct(
         return minOf(percent, 100.0)
     }
 
-    // Abstract dari Product: jumlah diskon dalam Rupiah
+    /**
+     * Menghitung potongan diskon pakaian dalam satuan Rupiah.
+     *
+     * @return Nilai potongan harga diskon dalam Rupiah.
+     */
     override fun calculateDiscount(): Double =
         getPriceValue() * getDiscountPercent() / 100
 
-    // Abstract dari Product: nama kategori
+    /**
+     * Mengembalikan nama kategori produk pakaian.
+     *
+     * @return String `"Pakaian"`.
+     */
     override fun getCategory(): String = "Pakaian"
 
-    // Info umum dicetak parent, lalu ditambah info khusus pakaian
+    /**
+     * Menampilkan informasi detail pakaian ke konsol terminal.
+     * Memanggil [super.displayInfo], lalu menampilkan ukuran, warna, bahan,
+     * status musiman, dan total persentase diskon.
+     */
     override fun displayInfo() {
         super.displayInfo()
         println("Ukuran     : $size")

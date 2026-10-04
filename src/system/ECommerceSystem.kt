@@ -16,7 +16,7 @@ import user.User
 class ECommerceSystem(val storeName: String = "Toko Kelompok") {
 
     private val products = mutableMapOf<String, Product>() // key = product id
-    private val customers = mutableSetOf<String>()         // username pelanggan terdaftar
+    private val customers = mutableSetOf<String>()         // username pelanggan terdaftar biar bisa di cari
     private val users = mutableMapOf<String, User>()       // key = email lowercase
     private val orders = mutableListOf<Order>()
     private var orderCounter = 0

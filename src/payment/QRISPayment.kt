@@ -3,23 +3,41 @@ package payment
 import java.util.UUID
 
 /**
- * Pembayaran menggunakan QRIS.
- * Mengimplementasikan PaymentMethod.
+ * Implementasi metode pembayaran digital menggunakan QRIS (Quick Response Code Indonesian Standard).
+ *
+ * Mengimplementasikan antarmuka [PaymentMethod] dengan mekanisme pembuatan kode QR dinamis,
+ * batas waktu kedaluwarsa, dan bebas biaya admin (Rp 0).
+ *
+ * @property merchantName Nama identitas merchant yang terdaftar di QRIS.
+ * @property expiryMinutes Batas waktu berlakunya kode QR dalam menit (default: 15 menit).
  */
 class QRISPayment(
     private val merchantName: String = "ECommerce Store",
     private val expiryMinutes: Int = 15
 ) : PaymentMethod {
 
+    /** Nama metode pembayaran. */
     override val name: String = "QRIS"
+
+    /** Alias untuk properti [name]. */
     val methodName: String get() = name
 
+    /** Kode QR yang aktif digenerate. */
     private var qrCode: String? = null
+
+    /** Waktu dalam milidetik saat kode QR digenerate. */
     private var generatedAt: Long = 0L
+
+    /** Status penanda apakah QRIS telah lunas dibayar. */
     var isPaid: Boolean = false
         private set
 
-    /** Membuat kode QR unik untuk tagihan. */
+    /**
+     * Membuat kode QR unik berbasis UUID untuk nominal tagihan belanja tertentu.
+     *
+     * @param amount Nominal tagihan yang harus dibayar dalam Rupiah.
+     * @return String kode representasi QR unik.
+     */
     fun generateQR(amount: Double): String {
         val code = "QRIS-" + UUID.randomUUID().toString().take(8).uppercase()
         qrCode = code
@@ -33,10 +51,20 @@ class QRISPayment(
         return code
     }
 
+    /**
+     * Memeriksa apakah kode QR yang dibuat telah melebihi batas waktu kedaluwarsa.
+     *
+     * @return `true` jika waktu telah melebihi [expiryMinutes].
+     */
     private fun isExpired(): Boolean =
         System.currentTimeMillis() - generatedAt > expiryMinutes * 60_000L
 
-    /** Memproses pembayaran. Mengembalikan PaymentResult sesuai kontrak PaymentMethod. */
+    /**
+     * Memproses transaksi pembayaran QRIS sesuai kontrak [PaymentMethod].
+     *
+     * @param amount Nominal yang dibayarkan.
+     * @return [PaymentResult.Success] jika pembayaran valid, atau [PaymentResult.Failed] jika nominal tidak valid atau QR kedaluwarsa.
+     */
     override fun processPayment(amount: Double): PaymentResult {
         if (amount <= 0) {
             println("Pembayaran gagal: nominal tidak valid.")
@@ -57,11 +85,26 @@ class QRISPayment(
         return PaymentResult.Success(code)
     }
 
+    /**
+     * Menjalankan pemrosesan pembayaran dan mengembalikan nilai boolean sederhana.
+     *
+     * @param amount Nominal transaksi.
+     * @return `true` jika status pembayaran adalah Success.
+     */
     fun processPaymentBoolean(amount: Double): Boolean {
         return processPayment(amount) is PaymentResult.Success
     }
 
+    /**
+     * Mengembalikan biaya admin untuk transaksi QRIS (gratis / Rp 0).
+     *
+     * @param amount Nominal transaksi.
+     * @return Nilai `0.0`.
+     */
     override fun getFee(amount: Double): Double = 0.0
 
+    /**
+     * Representasi teks dari objek [QRISPayment].
+     */
     override fun toString(): String = "QRISPayment(merchant=$merchantName, paid=$isPaid)"
 }
