@@ -132,7 +132,8 @@ class ShoppingCart(private val owner: String = "User") {
             println("   Keranjang kosong")
         } else {
             items.forEach { (product, quantity) ->
-                println("${product.name} x$quantity = Rp ${formatRupiah(product.getDiscountedPrice() * quantity)}")
+                println("${product.id} | ${product.name} | Rp ${formatRupiah(product.getDiscountedPrice())} | Qty: $quantity")  
+                // println("${product.name} x$quantity = Rp ${formatRupiah(product.getDiscountedPrice() * quantity)}")
                 println("   (Diskon: Rp ${formatRupiah(product.calculateDiscount() * quantity)})")
             }
             println("-".repeat(50))

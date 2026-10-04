@@ -1,7 +1,14 @@
+package system
+
+import cart.ShoppingCart
 import order.Order
 import order.OrderStatus
+import payment.PaymentMethod
+import payment.PaymentResult
 import product.FoodProduct
 import product.Product
+import user.User
+// import user.Users
 
 
 // ECommerceSystem - pusat pengelolaan toko: katalog produk, pelanggan, order, dan checkout.
@@ -10,6 +17,7 @@ class ECommerceSystem(val storeName: String = "Toko Kelompok") {
 
     private val products = mutableMapOf<String, Product>() // key = product id
     private val customers = mutableSetOf<String>()         // username pelanggan terdaftar
+    private val users = mutableMapOf<String, User>()       // key = email lowercase
     private val orders = mutableListOf<Order>()
     private var orderCounter = 0
 
@@ -17,7 +25,7 @@ class ECommerceSystem(val storeName: String = "Toko Kelompok") {
 
     fun addProduct(product: Product): Boolean {
         if (products.containsKey(product.id)) {
-            println("❌ Produk dengan ID ${product.id} sudah ada.")
+            println("Produk dengan ID ${product.id} sudah ada.")
             return false
         }
         products[product.id] = product
@@ -45,7 +53,7 @@ class ECommerceSystem(val storeName: String = "Toko Kelompok") {
         products.values.forEach { it.displayInfo() }
     }
 
-    // ---------------------- PELANGGAN ----------------------
+    // ---------------------- PELANGGAN & USER (AUTH) ----------------------
 
     fun registerCustomer(username: String): Boolean {
         if (!customers.add(username)) {
@@ -55,6 +63,111 @@ class ECommerceSystem(val storeName: String = "Toko Kelompok") {
         return true
     }
 
+    /** Mendaftarkan objek User ke dalam sistem. */
+    fun registerUser(user: User): Boolean {
+        val emailKey = user.email.lowercase().trim()
+        if (users.containsKey(emailKey)) {
+            println("❌ Registrasi gagal: email ${user.email} sudah terdaftar.")
+            return false
+        }
+        users[emailKey] = user
+        registerCustomer(user.name)
+        return true
+    }
+
+    fun registerCustomer(user: User): Boolean = registerUser(user)
+
+    /** Mencari user berdasarkan email. */
+    fun getUserByEmail(email: String): User? = users[email.lowercase().trim()]
+
+    /** Mencari user berdasarkan nama. */
+    fun getUserByName(name: String): User? = users.values.find { it.name.equals(name, ignoreCase = true) }
+
+    /** Mendapatkan seluruh user terdaftar. */
+    fun getAllUsers(): List<User> = users.values.toList()
+
+    /**
+     * Memproses login pengguna dengan email dan password.
+     * Mengembalikan objek User jika berhasil, atau null jika gagal.
+     */
+    fun login(email: String, password: String): User? {
+        val user = getUserByEmail(email) ?: run {
+            println("❌ Login gagal: akun dengan email '$email' tidak ditemukan.")
+            return null
+        }
+        if (!user.authenticate(password)) {
+            println("❌ Login gagal: password yang dimasukkan salah.")
+            return null
+        }
+        println("✅ Login berhasil! Selamat datang kembali, ${user.name}.")
+        return user
+    }
+
+    /**
+     * Form interaktif login user via input terminal.
+     * Mengembalikan objek User jika login berhasil, atau null jika gagal.
+     */
+    
+    fun loginForm(): User? {
+        println("=".repeat(50))
+        println("🔐 FORM LOGIN PENGGUNA")
+        println("=".repeat(50))
+        print("Masukkan Email    : ")
+        val email = readLine()?.trim().orEmpty()
+        print("Masukkan Password : ")
+        val password = readLine()?.trim().orEmpty()
+
+        if (email.isBlank() || password.isBlank()) {
+            println("❌ Login gagal: email dan password wajib diisi.")
+            return null
+        }
+        return login(email, password)
+    }
+
+    /**
+     * Form interaktif registrasi user baru via input terminal.
+     * Mengembalikan objek User yang baru dibuat jika berhasil, atau null jika gagal.
+     */
+    fun registerForm(): User? {
+        println("=".repeat(50))
+        println("📝 FORM REGISTRASI PENGGUNA BARU")
+        println("=".repeat(50))
+        print("Masukkan Nama     : ")
+        val name = readLine()?.trim().orEmpty()
+        print("Masukkan Email    : ")
+        val email = readLine()?.trim().orEmpty()
+        print("Masukkan Alamat   : ")
+        val address = readLine()?.trim().orEmpty()
+        print("Masukkan Password : ")
+        val password = readLine()?.trim().orEmpty()
+
+        if (name.isBlank() || email.isBlank() || address.isBlank() || password.isBlank()) {
+            println("❌ Registrasi gagal: semua kolom wajib diisi.")
+            return null
+        }
+
+        if (getUserByEmail(email) != null) {
+            println("❌ Registrasi gagal: email $email sudah terdaftar.")
+            return null
+        }
+
+        val newId = "USR-%03d".format(users.size + 1)
+        return try {
+            val newUser = User(newId, name, email, address, password)
+            if (registerUser(newUser)) {
+                println("✅ Registrasi berhasil! Akun untuk $name siap digunakan.")
+                newUser
+            } else {
+                null
+            }
+        } catch (e: IllegalArgumentException) {
+            println("❌ Registrasi gagal: ${e.message}")
+            null
+        }
+    }
+
+
+
     // ---------------------- CHECKOUT ----------------------
 
     /**
@@ -63,24 +176,25 @@ class ECommerceSystem(val storeName: String = "Toko Kelompok") {
      *  - Pembayaran Pending -> order berstatus Pending (menunggu pembayaran)
      *  - Pembayaran Failed  -> tidak ada order, keranjang tetap utuh
      */
+    
     fun checkout(customerName: String, cart: ShoppingCart, payment: PaymentMethod): Order? {
         if (customerName !in customers) {
-            println("❌ Checkout gagal: pelanggan belum terdaftar.")
+            println(" Checkout gagal: pelanggan belum terdaftar.")
             return null
         }
         if (cart.isEmpty()) {
-            println("❌ Checkout gagal: keranjang kosong.")
+            println(" Checkout gagal: keranjang kosong.")
             return null
         }
 
         // 1. Validasi isi keranjang (stok tidak dicek lagi, sudah dikurangi saat addItem)
         for (product in cart.getItems().keys) {
             if (!products.containsKey(product.id)) {
-                println("❌ Checkout gagal: ${product.name} tidak ada di katalog.")
+                println(" Checkout gagal: ${product.name} tidak ada di katalog.")
                 return null
             }
             if (product is FoodProduct && product.isExpired()) {
-                println("❌ Checkout gagal: ${product.name} sudah kadaluarsa, hapus dari keranjang.")
+                println(" Checkout gagal: ${product.name} sudah kadaluarsa, hapus dari keranjang.")
                 return null
             }
         }
@@ -93,19 +207,28 @@ class ECommerceSystem(val storeName: String = "Toko Kelompok") {
 
         return when (val result = payment.processPayment(totalPayable)) {
             is PaymentResult.Success -> {
-                println("✅ Pembayaran berhasil (Transaksi: ${result.transactionId})")
+                println(" Pembayaran berhasil (Transaksi: ${result.transactionId})")
                 buildOrder(customerName, cart, OrderStatus.Paid)
             }
             PaymentResult.Pending -> {
-                println("⏳ Pembayaran menunggu konfirmasi, order dibuat berstatus Pending.")
+                println(" Pembayaran menunggu konfirmasi, order dibuat berstatus Pending.")
                 buildOrder(customerName, cart, OrderStatus.Pending)
             }
             is PaymentResult.Failed -> {
-                println("❌ Pembayaran gagal: ${result.reason} (kode ${result.errorCode})")
+                println(" Pembayaran gagal: ${result.reason} (kode ${result.errorCode})")
                 null
             }
         }
     }
+
+    fun checkout(user: User, cart: ShoppingCart, payment: PaymentMethod): Order? {
+        val order = checkout(user.name, cart, payment)
+        if (order != null) {
+            user.addOrder(order)
+        }
+        return order
+    }
+
 
     // Membuat order dari isi keranjang, lalu mengosongkan keranjang
     private fun buildOrder(customerName: String, cart: ShoppingCart, status: OrderStatus): Order {
@@ -114,7 +237,7 @@ class ECommerceSystem(val storeName: String = "Toko Kelompok") {
         val order = Order(orderId, customerName, cart.getItems(), status)
         orders.add(order)
         cart.clear() // stok tidak dikembalikan, barang resmi dibeli
-        println("🧾 Order $orderId berhasil dibuat.")
+        println(" Order $orderId berhasil dibuat.")
         return order
     }
 
@@ -129,7 +252,7 @@ class ECommerceSystem(val storeName: String = "Toko Kelompok") {
 
     fun updateOrderStatus(orderId: String, newStatus: OrderStatus): Boolean {
         val order = findOrder(orderId) ?: run {
-            println("❌ Order $orderId tidak ditemukan.")
+            println(" Order $orderId tidak ditemukan.")
             return false
         }
         return order.updateStatus(newStatus)
@@ -138,11 +261,11 @@ class ECommerceSystem(val storeName: String = "Toko Kelompok") {
     /** Batalkan order (hanya jika masih Pending/Paid) dan kembalikan stok produk. */
     fun cancelOrder(orderId: String, reason: String): Boolean {
         val order = findOrder(orderId) ?: run {
-            println("❌ Order $orderId tidak ditemukan.")
+            println(" Order $orderId tidak ditemukan.")
             return false
         }
         if (order.status != OrderStatus.Pending && order.status != OrderStatus.Paid) {
-            println("❌ Order tidak bisa dibatalkan pada status: ${order.status.display()}")
+            println(" Order tidak bisa dibatalkan pada status: ${order.status.display()}")
             return false
         }
         if (!order.updateStatus(OrderStatus.Cancelled(reason))) return false
@@ -217,3 +340,4 @@ class ECommerceSystem(val storeName: String = "Toko Kelompok") {
         return builder.toString()
     }
 }
+
