@@ -20,16 +20,18 @@ fun main() {
     // ============================================================
     // SEED DATA: KATALOG PRODUK
     // ============================================================
-    // system.addProduct(ElectronicProduct("E01", "Laptop Gaming ASUS", 15000000.0, 10, "ASUS", 36, true))
-    // system.addProduct(ElectronicProduct("E02", "Smartphone Samsung", 5000000.0, 15, "Samsung", 12, false))
-    // system.addProduct(ClothingProduct("C01", "Jaket Musim Dingin", 400000.0, 20, "XL", "Navy", "Wol", true))
-    // system.addProduct(ClothingProduct("C02", "Kaos Polos Cotton", 100000.0, 50, "M", "Hitam", "Katun Combed", false))
-    // system.addProduct(FoodProduct("F01", "Beras Organik 5kg", 90000.0, 30, "2026-12-31", 100, 5000, true, true))
-    // system.addProduct(FoodProduct("F02", "Roti Tawar Gandum", 20000.0, 25, "2026-10-06", 2, 500, false, true))
+    system.addProduct(ElectronicProduct("E01", "Laptop Gaming ASUS", 15000000.0, 10, "ASUS", 36, true))
+    system.addProduct(ElectronicProduct("E02", "Smartphone Samsung", 5000000.0, 15, "Samsung", 12, false))
+    system.addProduct(ClothingProduct("C01", "Jaket Musim Dingin", 400000.0, 20, "XL", "Navy", "Wol", true))
+    system.addProduct(ClothingProduct("C02", "Kaos Polos Cotton", 100000.0, 50, "M", "Hitam", "Katun Combed", false))
+    system.addProduct(FoodProduct("F01", "Beras Organik 5kg", 90000.0, 30, "2026-12-31", 100, 5000, true, true))
+    system.addProduct(FoodProduct("F02", "Roti Tawar Gandum", 20000.0, 25, "2026-10-06", 2, 500, false, true))
 
     // Akun demo bawaan (agar penguji bisa langsung tes login)
-    val demoUser = User("USR-001", "Budi Santoso", "budi@email.com", "Jl. Mawar No. 10", "password123")
-    system.registerUser(demoUser)
+    val demoUser1 = User("USR-001", "Budi", "budi@email.com", "Jl. Mawar No. 10", "123")
+    val demoUser2 = User("USR-002", "Siti", "siti@email.com", "Jl. Melati No. 15", "123")
+    system.registerUser(demoUser1)
+    system.registerUser(demoUser2)
 
     // State penanda sesi user yang sedang login (null = belum login)
     var currentUser: User? = null

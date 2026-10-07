@@ -4,3 +4,12 @@
 .vscode/
 *.log
 jre/
+kotlinc/
+testing_output.txt
+EcommerceApp.jar
+~$*
+*.tmp
+GEMINI.md
+TugasKelompokPertemuan4.md
+docs/*.md
+*.py
